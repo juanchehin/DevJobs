@@ -4,38 +4,38 @@ const multer = require('multer');
 const shortid = require('shortid');
 
 exports.subirImagen = (req, res, next) => {
-    upload(req, res, function(error) {
-        if(error) {
-            if(error instanceof multer.MulterError) {
-                if(error.code === 'LIMIT_FILE_SIZE') {
-                    req.flash('error', 'El archivo es muy grande: Máximo 100kb ');
+        upload(req, res, function(error) {
+            if (error) {
+                if (error instanceof multer.MulterError) {
+                    if (error.code === 'LIMIT_FILE_SIZE') {
+                        req.flash('error', 'El archivo es muy grande: Máximo 100kb ');
+                    } else {
+                        req.flash('error', error.message);
+                    }
                 } else {
                     req.flash('error', error.message);
                 }
+                res.redirect('/administracion');
+                return;
             } else {
-                req.flash('error', error.message);
+                return next();
             }
-            res.redirect('/administracion');
-            return;
-        } else {
-            return next();
-        }
-    });
-}
-// Opciones de Multer
+        });
+    }
+    // Opciones de Multer
 const configuracionMulter = {
-    limits : { fileSize : 100000 },
+    limits: { fileSize: 100000 },
     storage: fileStorage = multer.diskStorage({
-        destination : (req, file, cb) => {
-            cb(null, __dirname+'../../public/uploads/perfiles');
-        }, 
-        filename : (req, file, cb) => {
+        destination: (req, file, cb) => {
+            cb(null, __dirname + '../../public/uploads/perfiles');
+        },
+        filename: (req, file, cb) => {
             const extension = file.mimetype.split('/')[1];
             cb(null, `${shortid.generate()}.${extension}`);
         }
     }),
     fileFilter(req, file, cb) {
-        if(file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' ) {
+        if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
             // el callback se ejecuta como true o false : true cuando la imagen se acepta
             cb(null, true);
         } else {
@@ -57,6 +57,7 @@ exports.formCrearCuenta = (req, res) => {
 
 exports.validarRegistro = (req, res, next) => {
 
+    console.log('req.body es : ', req.body);
     // sanitizar
     req.sanitizeBody('nombre').escape();
     req.sanitizeBody('email').escape();
@@ -72,13 +73,14 @@ exports.validarRegistro = (req, res, next) => {
 
     const errores = req.validationErrors();
 
-    if(errores){
+    if (errores) {
         // si hay errores
         req.flash('error', errores.map(error => error.msg));
 
         res.render('crear-cuenta', {
             nombrePagina: 'Crea tu cuenta en devJobs',
-            tagline: 'Comienza a publicar tus vacantes gratis, solo debes crear una cuenta',mensajes: req.flash()
+            tagline: 'Comienza a publicar tus vacantes gratis, solo debes crear una cuenta',
+            mensajes: req.flash()
         });
         return;
     }
@@ -87,7 +89,7 @@ exports.validarRegistro = (req, res, next) => {
     next();
 }
 
-exports.crearUsuario = async (req, res, next) => {
+exports.crearUsuario = async(req, res, next) => {
     // crear el usuario
     const usuario = new Usuarios(req.body);
     try {
@@ -100,33 +102,33 @@ exports.crearUsuario = async (req, res, next) => {
 }
 
 // formulario para iniciar sesión
-exports.formIniciarSesion = (req, res ) => {
+exports.formIniciarSesion = (req, res) => {
     res.render('iniciar-sesion', {
-        nombrePagina : 'Iniciar Sesión devJobs'
+        nombrePagina: 'Iniciar Sesión devJobs'
     })
 }
 
 // Form editar el Perfil
 exports.formEditarPerfil = (req, res) => {
-    res.render('editar-perfil', {
-        nombrePagina : 'Edita tu perfil en devJobs',
-        usuario: req.user,
-        cerrarSesion: true,
-        nombre : req.user.nombre,
-        imagen : req.user.imagen
-    })
-}
-// Guardar cambios editar perfil
-exports.editarPerfil = async (req, res) => {
+        res.render('editar-perfil', {
+            nombrePagina: 'Edita tu perfil en devJobs',
+            usuario: req.user,
+            cerrarSesion: true,
+            nombre: req.user.nombre,
+            imagen: req.user.imagen
+        })
+    }
+    // Guardar cambios editar perfil
+exports.editarPerfil = async(req, res) => {
     const usuario = await Usuarios.findById(req.user._id);
 
     usuario.nombre = req.body.nombre;
     usuario.email = req.body.email;
-    if(req.body.password) {
+    if (req.body.password) {
         usuario.password = req.body.password
     }
 
-    if(req.file) {
+    if (req.file) {
         usuario.imagen = req.file.filename;
     }
 
@@ -142,7 +144,7 @@ exports.validarPerfil = (req, res, next) => {
     // sanitizar
     req.sanitizeBody('nombre').escape();
     req.sanitizeBody('email').escape();
-    if(req.body.password){
+    if (req.body.password) {
         req.sanitizeBody('password').escape();
     }
     // validar
@@ -151,16 +153,16 @@ exports.validarPerfil = (req, res, next) => {
 
     const errores = req.validationErrors();
 
-    if(errores) {
+    if (errores) {
         req.flash('error', errores.map(error => error.msg));
 
         res.render('editar-perfil', {
-            nombrePagina : 'Edita tu perfil en devJobs',
+            nombrePagina: 'Edita tu perfil en devJobs',
             usuario: req.user,
             cerrarSesion: true,
-            nombre : req.user.nombre,
-            imagen : req.user.imagen,
-            mensajes : req.flash()
+            nombre: req.user.nombre,
+            imagen: req.user.imagen,
+            mensajes: req.flash()
         })
     }
     next(); // todo bien, siguiente middleware!

@@ -7,7 +7,8 @@ const path = require('path');
 const router = require('./routes');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
-const MongoStore = require('connect-mongo')(session);
+// const MongoStore = require('connect-mongo')(session);
+const MongoStore = require('connect-mongo');
 const bodyParser = require('body-parser');
 const expressValidator = require('express-validator');
 const flash = require('connect-flash');
@@ -22,8 +23,8 @@ const app = express();
 app.use(expressValidator());
 
 // habilitar body-parser
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// app.use(bodyParser.json());
+// app.use(bodyParser.urlencoded({ extended: true }));
 
 
 // habilitar handlebars como view
@@ -40,13 +41,25 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(cookieParser());
 
-app.use(session({
+/* app.use(session({
     secret: process.env.SECRETO,
     key: process.env.KEY,
     resave: false,
     saveUninitialized: false,
     store: new MongoStore({ mongooseConnection: mongoose.connection })
 }));
+*/
+
+// Session Config
+app.use(session({
+    secret: process.env.SECRETO,
+    key: process.env.KEY,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.DATABASE
+    })
+}))
 
 // inicializar passport
 app.use(passport.initialize());
